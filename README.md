@@ -1,0 +1,2 @@
+# haskell-notes
+Haskell Notes
