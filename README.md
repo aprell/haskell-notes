@@ -1,7 +1,7 @@
 # Haskell Notes
 
 > Someone told me that you don't just learn Haskell in the usual way (by
-> programming), you *study* Haskell ... ---[The Beauty of Haskell][1]
+> programming), you *study* Haskell ... &mdash;[The Beauty of Haskell][1]
 
 
 
