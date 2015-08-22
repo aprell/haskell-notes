@@ -72,6 +72,23 @@ Functor :: (* -> *) -> Constraint
 Functor Maybe :: Constraint
 ```
 
+Note that `Functor Maybe` has kind `Constraint`, which implies that it cannot
+be used as a value type. Many (unary) type constructors are in fact instances
+of `Functor`.
+
+```
+λ> :info Functor
+class Functor (f :: * -> *) where
+  fmap :: (a -> b) -> f a -> f b
+  (GHC.Base.<$) :: a -> f b -> f a
+    -- Defined in ‘GHC.Base’
+instance Functor Maybe -- Defined in ‘Data.Maybe’
+instance Functor (Either a) -- Defined in ‘Data.Either’
+instance Functor [] -- Defined in ‘GHC.Base’
+instance Functor IO -- Defined in ‘GHC.Base’
+instance Functor ((->) r) -- Defined in ‘GHC.Base’
+instance Functor ((,) a) -- Defined in ‘GHC.Base’
+```
 
 
 
