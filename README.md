@@ -90,6 +90,67 @@ instance Functor ((->) r) -- Defined in ‘GHC.Base’
 instance Functor ((,) a) -- Defined in ‘GHC.Base’
 ```
 
+Wait, `(->) r` is a functor? What does it mean to map a function over a
+function? Recall the signature of `fmap`.
+
+```
+λ> :t fmap
+fmap :: Functor f => (a -> b) -> f a -> f b
+```
+
+Specializing `f` to `(->) r` gives `(a -> b) -> (->) r a -> (->) r b`, which
+is equivalent to `(a -> b) -> (r -> a) -> (r -> b)` in infix form. This
+signature looks familiar.
+
+```
+λ> :t (.)
+(.) :: (b -> c) -> (a -> b) -> a -> c
+```
+
+In fact, the `Functor` instance for `(->) r` is simply:
+
+```haskell
+instance Functor ((->) r) where
+	fmap = (.)
+```
+
+```
+λ> let f = fmap (*3) (+2)
+λ> :t f
+f :: Num a => a -> a
+λ> f 1
+9
+λ> let g = (*3) . (+2)
+λ> :t g
+g :: Num c => c -> c
+λ> g 1
+9
+```
+
+Let us repeat the exercise with the pair functor. Substituting `(,) c` for `f`
+gives `(a -> b) -> (,) c a -> (,) c b`, which is equivalent to `(a -> b) ->
+(c,a) -> (c,b)` in infix form. We see that `fmap` leaves the first element of
+a pair unchanged.
+
+```
+λ> fmap (+1) (2,3)
+(2,4)
+```
+
+If we want `fmap` to behave differently, we can write a `newtype` wrapper and
+make it an instance of `Functor`.
+
+```haskell
+newtype Pair a b = Pair { fromPair :: (b, a) }
+
+instance Functor (Pair a) where
+    fmap f (Pair (b, a)) = Pair (f b, a)
+```
+
+```
+λ> fromPair . fmap (+1) $ Pair (2,3)
+(3,3)
+```
 
 
 
