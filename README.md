@@ -154,10 +154,10 @@ Every proper instance of `Functor` should satisfy the [functor laws][3]. The
 second functor law requires that `fmap (f . g) == fmap f . fmap g`.
 
 ```
-λ> ((*4) . (+3)) `fmap` (1,2)
-(1,20)
-λ> (*4) `fmap` (+3) `fmap` (1,2)
-(1,20)
+λ> ((*3) . (+2)) `fmap` Just 1
+Just 9
+λ> (*3) `fmap` (+2) `fmap` Just 1
+Just 9
 ```
 
 There is actually an infix synonym for `fmap`.
@@ -172,10 +172,10 @@ infixl 4 <$>
 Think function application (`$`) with context (`< >`).
 
 ```
-λ> (*4) $ (+3) $ 2
-20
-λ> (*4) <$> (+3) <$> (1,2)
-(1,20)
+λ> (*3) $ (+2) $ 1
+9
+λ> (*3) <$> (+2) <$> Just 1
+9
 ```
 
 
