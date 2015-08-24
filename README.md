@@ -31,9 +31,9 @@ Maybe Int :: *
 [Int] :: *
 ```
 
-Multi-parameter type constructors can be partially applied, just like multi-parameter
-functions. `Either`, for example, which has kind `* -> * -> *`, returns a type
-constructor of kind `* -> *` when applied to a type argument of kind `*`.
+Multi-parameter type constructors can be partially applied, just like
+multi-parameter functions. `Either`, for example, which has kind `* -> * ->
+*`, returns a type constructor when applied to a type.
 
 ```
 λ> :k Either
@@ -121,8 +121,6 @@ f :: Num a => a -> a
 λ> f 1
 9
 λ> let g = (*3) . (+2)
-λ> :t g
-g :: Num c => c -> c
 λ> g 1
 9
 ```
@@ -152,10 +150,33 @@ instance Functor (Pair a) where
 (3,3)
 ```
 
+Every proper instance of `Functor` should satisfy the [functor laws][3]. The
+second functor law requires that `fmap (f . g) == fmap f . fmap g`.
 
+```
+λ> ((*4) . (+3)) `fmap` (1,2)
+(1,20)
+λ> (*4) `fmap` (+3) `fmap` (1,2)
+(1,20)
+```
 
+There is actually an infix synonym for `fmap`.
 
+```
+λ> :i (<$>)
+(<$>) :: Functor f => (a -> b) -> f a -> f b
+    -- Defined in ‘Data.Functor’
+infixl 4 <$>
+```
 
+Think function application (`$`) with context (`< >`).
+
+```
+λ> (*4) $ (+3) $ 2
+20
+λ> (*4) <$> (+3) <$> (1,2)
+(1,20)
+```
 
 
 
@@ -164,3 +185,4 @@ instance Functor (Pair a) where
 
 [1]: http://jabberwocky.eu/2014/04/25/the-beauty-of-haskell
 [2]: https://leanpub.com/purescript/read#leanpub-auto-type-constructors-and-kinds
+[3]: https://hackage.haskell.org/package/base-4.8.1.0/docs/Data-Functor.html
