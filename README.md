@@ -175,7 +175,7 @@ Think function application (`$`) with context (`< >`).
 λ> (*3) $ (+2) $ 1
 9
 λ> (*3) <$> (+2) <$> Just 1
-9
+Just 9
 ```
 
 
