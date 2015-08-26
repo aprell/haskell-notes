@@ -154,10 +154,12 @@ Every proper instance of `Functor` should satisfy the [functor laws][3]. The
 second functor law requires that `fmap (f . g) == fmap f . fmap g`.
 
 ```
-λ> ((*3) . (+2)) `fmap` Just 1
-Just 9
-λ> (*3) `fmap` (+2) `fmap` Just 1
-Just 9
+λ> :m +Test.QuickCheck
+λ> let f = (*3)
+λ> let g = (+2)
+λ> let prop x = fmap (f . g) x == (fmap f . fmap g) x
+λ> quickCheck (prop :: Maybe Int -> Bool)
++++ OK, passed 100 tests.
 ```
 
 There is actually an infix synonym for `fmap`.
