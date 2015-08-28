@@ -120,9 +120,6 @@ instance Functor ((->) r) where
 f :: Num a => a -> a
 λ> f 1
 9
-λ> let g = (*3) . (+2)
-λ> g 1
-9
 ```
 
 Let us repeat the exercise with the pair functor. Substituting `(,) c` for `f`
@@ -162,7 +159,65 @@ second functor law requires that `fmap (f . g) == fmap f . fmap g`.
 +++ OK, passed 100 tests.
 ```
 
-There is actually an infix synonym for `fmap`.
+So far we have lifted only single-argument functions. Given a function of type
+`a -> b`, `fmap` returns a lifted version of the function that takes a value
+of type `f a` and returns a value of type `f b`. Now suppose we want to lift a
+function of type `a -> (b -> c)` (parentheses added for clarity). What we get
+is a function of type `f a -> f (b -> c)`, one that takes a value of type `f
+a` and returns a value of type `f (b -> c)`. The lifted function's result is a
+single-argument function inside a functor. Guess what happens if we try to
+lift a function of type `a -> (b -> c -> d)`. How do we apply functions of
+type `f (b -> c)` or `f (b -> c -> d)`? Enter `Applicative`.
+
+```
+λ> :i Applicative
+class Functor f => Applicative (f :: * -> *) where
+  pure :: a -> f a
+  (<*>) :: f (a -> b) -> f a -> f b
+  (*>) :: f a -> f b -> f b
+  (<*) :: f a -> f b -> f a
+    -- Defined in ‘Control.Applicative’
+instance Applicative [] -- Defined in ‘Control.Applicative’
+instance Applicative ZipList -- Defined in ‘Control.Applicative’
+instance Monad m => Applicative (WrappedMonad m)
+  -- Defined in ‘Control.Applicative’
+instance Control.Arrow.Arrow a => Applicative (WrappedArrow a b)
+  -- Defined in ‘Control.Applicative’
+instance Applicative Maybe -- Defined in ‘Control.Applicative’
+instance Applicative IO -- Defined in ‘Control.Applicative’
+instance Applicative (Either e) -- Defined in ‘Control.Applicative’
+instance Data.Monoid.Monoid m => Applicative (Const m)
+  -- Defined in ‘Control.Applicative’
+instance Applicative ((->) a) -- Defined in ‘Control.Applicative’
+instance Data.Monoid.Monoid a => Applicative ((,) a)
+  -- Defined in ‘Control.Applicative’
+```
+
+Suppose we want to add two values of type `Maybe Int`, say `Just 1` and `Just
+2`. We can `fmap (+) $ Just 1`, which produces `Just (+1) :: Maybe (Int ->
+Int)`. What is left to complete the operation is a function `(???) :: Maybe
+(Int -> Int) -> Maybe Int -> Maybe Int` that applies the `(+1)` wrapped in
+`Just` to `Just 2`. That function is the application operator `<*>` from
+`Applicative`.
+
+```
+λ> Just (+1) <*> Just 2
+Just 3
+```
+
+The complete example, using `fmap` in infix position:
+
+```
+λ> (+) `fmap` Just 1 <*> Just 2
+Just 3
+```
+
+There is actually an infix synonym for `fmap`, which lets us write:
+
+```
+λ> (+) <$> Just 1 <*> Just 2
+Just 3
+```
 
 ```
 λ> :i (<$>)
@@ -179,6 +234,12 @@ Think function application (`$`) with context (`< >`).
 λ> (*3) <$> (+2) <$> Just 1
 Just 9
 ```
+
+
+
+
+
+
 
 
 
