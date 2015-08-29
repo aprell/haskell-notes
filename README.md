@@ -193,19 +193,25 @@ instance Data.Monoid.Monoid a => Applicative ((,) a)
   -- Defined in ‘Control.Applicative’
 ```
 
-Suppose we want to add two values of type `Maybe Int`, say `Just 1` and `Just
-2`. We can `fmap (+) $ Just 1`, which produces `Just (+1) :: Maybe (Int ->
-Int)`. What is left to complete the operation is a function `(???) :: Maybe
-(Int -> Int) -> Maybe Int -> Maybe Int` that applies the `(+1)` wrapped in
-`Just` to `Just 2`. That function is the application operator `<*>` from
-`Applicative`.
+Suppose we want to add two values of type `Maybe a`, say `Just 1` and `Just
+2`. We can start with `fmap (+) $ Just 1`, which produces `Just (+1) :: Num a
+=> Maybe (a -> a)`. What we need to complete the operation is a function of type
+`Maybe (a -> b) -> Maybe a -> Maybe b` that applies the `(+1)` wrapped
+in `Just` to `Just 2`. Something like this:
+
+```haskell
+Just f `apply` x = fmap f x
+Nothing `apply` _ = Nothing
+```
 
 ```
-λ> Just (+1) <*> Just 2
+λ> (+) `fmap` Just 1 `apply` Just 2
 Just 3
 ```
 
-The complete example, using `fmap` in infix position:
+The function we are looking for is the application operator `<*>` from
+`Applicative`. Every instance of `Applicative`, including `Maybe`, must
+implement `<*>`.
 
 ```
 λ> (+) `fmap` Just 1 <*> Just 2
@@ -235,6 +241,41 @@ Think function application (`$`) with context (`< >`).
 Just 9
 ```
 
+Instead of using `fmap`, we can use `pure` to lift values.
+
+```
+λ> :t pure (+)
+pure (+) :: (Num a, Applicative f) => f (a -> a -> a)
+λ> :t pure (+) <*> Just 1
+pure (+) <*> Just 1 :: Num a => Maybe (a -> a)
+λ> :t pure (+) <*> Just 1 <*> Just 2
+pure (+) <*> Just 1 <*> Just 2 :: Num b => Maybe b
+λ> pure (+) <*> Just 1 <*> Just 2
+Just 3
+```
+
+Notice how `(+) <$> Just 1` and `pure (+) <*> Just 1` produce the same result.
+In fact, we expect that `f <$> x == pure f <*> x`.
+
+```
+λ> :m +Test.QuickCheck
+λ> let f = (+1)
+λ> let prop x = (f <$> x) == (pure f <*> x)
+λ> quickCheck (prop :: Maybe Int -> Bool)
++++ OK, passed 100 tests.
+```
+
+[Typeclassopedia][4]:
+> In other words, we can decompose `fmap` into two more atomic operations:
+> injection into a context, and application within a context.
+
+Also, notice how `f <$> x <*> y` or `pure f <*> x <*> y` resemble `f x y`. The
+use of operators can be hidden behind utility functions.
+
+```
+λ> liftA2 (+) (Just 1) (Just 2)
+Just 3
+```
 
 
 
@@ -249,3 +290,4 @@ Just 9
 [1]: http://jabberwocky.eu/2014/04/25/the-beauty-of-haskell
 [2]: https://leanpub.com/purescript/read#leanpub-auto-type-constructors-and-kinds
 [3]: https://hackage.haskell.org/package/base-4.8.1.0/docs/Data-Functor.html
+[4]: https://wiki.haskell.org/Typeclassopedia#Applicative
