@@ -65,6 +65,8 @@ The kind of `Either` is `* -> (* -> *)`, not `(* -> *) -> *`. A type
 constructor of the latter kind is a *higher-order* type constructor, one that
 expects a type constructor as an argument.
 
+## Functors and Applicatives
+
 ```
 λ> :k Functor
 Functor :: (* -> *) -> Constraint
@@ -111,7 +113,7 @@ In fact, the `Functor` instance for `(->) r` is simply:
 
 ```haskell
 instance Functor ((->) r) where
-	fmap = (.)
+  fmap = (.)
 ```
 
 ```
@@ -122,7 +124,7 @@ f :: Num a => a -> a
 9
 ```
 
-Let us repeat the exercise with the pair functor. Substituting `(,) c` for `f`
+Let's repeat the exercise with the pair functor. Substituting `(,) c` for `f`
 gives `(a -> b) -> (,) c a -> (,) c b`, which is equivalent to `(a -> b) ->
 (c,a) -> (c,b)` in infix form. We see that `fmap` leaves the first element of
 a pair unchanged.
@@ -139,7 +141,7 @@ make it an instance of `Functor`.
 newtype Pair a b = Pair { fromPair :: (b, a) }
 
 instance Functor (Pair a) where
-    fmap f (Pair (b, a)) = Pair (f b, a)
+  fmap f (Pair (b, a)) = Pair (f b, a)
 ```
 
 ```
@@ -277,11 +279,123 @@ use of operators can be hidden behind utility functions.
 Just 3
 ```
 
+## Monads
 
+do notation is syntactic sugar for `>>=` and lambdas.
 
+```haskell
+helloWorld :: Maybe String
+helloWorld = do
+  x <- Just "Hello"
+  y <- Just "World"
+  Just (x ++ " " ++ y)
+```
 
+is desugared to
 
+```haskell
+helloWorld =
+  Just "Hello" >>= \x ->
+  Just "World" >>= \y ->
+  Just (x ++ " " ++ y)
+```
 
+More generally
+
+```haskell
+do
+  action1
+  action2
+  action3
+```
+
+is desugared to
+
+```haskell
+action1 >>
+action2 >>
+action3 >>
+```
+
+and
+
+```haskell
+do
+  x <- action1
+  y <- action2
+  action3 x y
+```
+
+is desugared to
+
+```haskell
+action1 >>= \x ->
+action2 >>= \y ->
+action3 x y
+```
+
+Another example:
+
+```haskell
+echo = do { line <- getLine; putStrLn line; echo }
+```
+
+is equivalent to
+
+```haskell
+echo = getLine >>= \line -> putStrLn line >>= \_ -> echo
+```
+
+which can be simplified to
+
+```haskell
+echo = getLine >>= putStrLn >> echo
+```
+
+Using do notation with lists gets us... list comprehensions: syntactic sugar
+for using lists as monads.
+
+```haskell
+listOfTuples :: [(Int,Char)]
+listOfTuples = do
+  n <- [1,2]
+  c <- ['a','b']
+  return (n,c)
+```
+
+can be written more succinctly as
+
+```haskell
+listOfTuples = [ (n,c) | n <- [1,2], c <- ['a','b'] ]
+```
+
+`liftM` is like `fmap`, but with a `Monad` class constraint.
+
+```haskell
+liftM :: Monad m => (a -> b) -> m a -> m b
+```
+
+Similarly, `ap` is like `<*>`, but with a `Monad` class constraint:
+
+```haskell
+ap :: Monad m => m (a -> b) -> m a -> m b
+```
+
+`m >>= f` is equivalent to `join (fmap f m)`, with `join` flattening monadic
+values.
+
+```haskell
+join :: Monad m => m (m a) -> m a
+```
+
+Recall the list monad: `xs >>= f = concat (map f xs) = concatMap f xs`.
+`concat` is `join` specialized for lists; `concatMap` (actually, `flip
+concatMap`) is `>>=` specialized for lists.
+
+[Haskell Wikibook][5]:
+> The bind operator is key to understanding how different monads do their
+> jobs, as its definition specifies the chaining strategy used when working
+> with the monad.
 
 
 
@@ -291,3 +405,4 @@ Just 3
 [2]: https://leanpub.com/purescript/read#leanpub-auto-type-constructors-and-kinds
 [3]: https://hackage.haskell.org/package/base-4.8.1.0/docs/Data-Functor.html
 [4]: https://wiki.haskell.org/Typeclassopedia#Applicative
+[5]: http://en.wikibooks.org/wiki/Haskell/Understanding_monads/List
